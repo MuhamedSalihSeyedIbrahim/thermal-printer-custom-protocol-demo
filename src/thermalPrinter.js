@@ -29,6 +29,13 @@ function getDevice(adapter = "", options = { uri: "", adapter: null }) {
       device = new escpos.USB();
       break;
     }
+    case "BLUETOOTH": {
+      device = new escpos.Bluetooth(options.uri || "/dev/usb/lp0", 1);
+      break;
+    }
+    case "CUSTOM": {
+      break;
+    }
     default: {
       throw new Error(`Unknown printer adapter Selected`);
     }
@@ -43,7 +50,7 @@ async function print(printer, content, options) {
     if (err) {
       throw err;
     }
-
+    // printing pattern should be update as per user criteria
     printer
       .font(options.font || "a")
       .align(options.align || "ct")
@@ -83,15 +90,12 @@ function buildParamsObj(entries) {
 }
 
 function getParsedData(data) {
-  const { hostname, searchParams } = new URL(data);
+  const { hostname, searchParams } = new URL(data),
+    paramObj = buildParamsObj(searchParams),
+    { adapter, barCode, qrCode, size } = paramObj;
 
-  const { adapter, barCode, qrCode, uri, font, align, style, size } =
-    buildParamsObj(searchParams);
   const options = {
-      uri,
-      font,
-      align,
-      style,
+      ...buildParamsObj(searchParams),
       size: size ? size.split("") : [],
     },
     content = {
